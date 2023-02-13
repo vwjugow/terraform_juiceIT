@@ -1,36 +1,20 @@
 #### CI
 resource "aws_codebuild_project" "shop_be_codebuild" {
-  name         = "${local.prefix}_be_codebuild_proj"
+  name         = "${local.prefix}_codebuild_proj"
   service_role = aws_iam_role.codebuild_role.arn
-  artifacts {
-    type = "NO_ARTIFACTS"
-  }
   source {
-    type            = "GITHUB"
-    location        = "https://github.com/vwjugow/shop_be_juiceIT.git"
-    git_clone_depth = 1
-    buildspec       = <<EOF
-version: 0.2
-phases:
-  build:
-    commands:
-      - echo "Running script from GitHub repository"
-      - bash build_zip.sh
-artifacts:
-  files:
-    - flask-app.zip
-EOF
+    type      = "CODEPIPELINE"
+    buildspec = "buildspec-zip.yml"
   }
-  source_version = "zip_for_lambda"
+  artifacts {
+    type = "CODEPIPELINE"
+  }
   environment {
-    type         = "LINUX_CONTAINER"
-    image        = "aws/codebuild/standard:2.0"
-    compute_type = "BUILD_GENERAL1_SMALL"
+    compute_type = var.codebuild_configuration["cb_compute_type"]
+    image        = var.codebuild_configuration["cb_image"]
+    type         = var.codebuild_configuration["cb_type"]
   }
-  tags = {
-    Terraform   = "true"
-    Environment = "dev"
-  }
+  tags = local.common_tags
 }
 
 resource "aws_iam_role" "codebuild_role" {
@@ -47,31 +31,55 @@ resource "aws_iam_role" "codebuild_role" {
       }
     ]
   })
+  description = "Allows CodeBuild to call AWS services on your behalf."
+  managed_policy_arns = [
+    "arn:aws:iam::aws:policy/AmazonS3FullAccess",
+  ]
 }
 
 resource "aws_iam_role_policy" "codebuild_role_policy" {
-  role   = aws_iam_role.codebuild_role.name
-  policy = <<POLICY
-{
-  "Version": "2012-10-17",
-  "Statement": [
+  role = aws_iam_role.codebuild_role.name
+  policy = jsonencode(
     {
-      "Effect": "Allow",
-      "Resource": [
-        "*"
-      ],
-      "Action": [
-        "logs:CreateLogGroup",
-        "logs:CreateLogStream",
-        "logs:PutLogEvents"
+      "Version" : "2012-10-17",
+      "Statement" : [
+        {
+          "Effect" : "Allow",
+          "Resource" : [
+            "*"
+          ],
+          "Action" : [
+            "logs:CreateLogGroup",
+            "logs:CreateLogStream",
+            "logs:PutLogEvents"
+          ]
+        },
+        {
+          "Action" : [
+            "s3:PutObject",
+            "s3:GetObject",
+            "s3:GetObjectVersion",
+            "s3:GetBucketAcl",
+            "s3:GetBucketLocation"
+          ]
+          "Effect" : "Allow"
+          "Resource" : [
+            "arn:aws:s3:::codepipeline-us-east-1-*"
+          ]
+        },
+        {
+          "Action" : [
+            "codebuild:CreateReportGroup",
+            "codebuild:CreateReport",
+            "codebuild:UpdateReport",
+            "codebuild:BatchPutTestCases",
+            "codebuild:BatchPutCodeCoverages"
+          ]
+          "Effect" : "Allow"
+          "Resource" : [
+            "*"
+          ]
+        }
       ]
-    }
-  ]
-}
-POLICY
-}
-
-resource "aws_iam_role_policy_attachment" "codebuild_policy_attachment" {
-  policy_arn = "arn:aws:iam::aws:policy/AWSCodeBuildDeveloperAccess"
-  role       = aws_iam_role.codebuild_role.name
+  })
 }
