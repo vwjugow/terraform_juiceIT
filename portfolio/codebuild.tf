@@ -1,6 +1,6 @@
 #### CI
 resource "aws_codebuild_project" "shop_be_codebuild" {
-  name         = "shope_be_codebuild_proj"
+  name         = "${local.prefix}_be_codebuild_proj"
   service_role = aws_iam_role.codebuild_role.arn
   artifacts {
     type = "NO_ARTIFACTS"
@@ -34,7 +34,7 @@ EOF
 }
 
 resource "aws_iam_role" "codebuild_role" {
-  name = "shopbe-codebuild-role"
+  name = "${local.prefix}-codebuild-role"
   assume_role_policy = jsonencode({
     Version = "2012-10-17",
     Statement = [

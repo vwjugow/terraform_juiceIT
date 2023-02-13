@@ -5,7 +5,7 @@ output "canonical_user_id" {
 }
 
 resource "aws_s3_bucket" "shop-be-images" {
-  bucket = "shop-be-images-bucket"
+  bucket = "${local.prefix}-images-bucket"
   tags = {
   }
 }
