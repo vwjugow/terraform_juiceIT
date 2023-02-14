@@ -26,9 +26,9 @@ resource "aws_s3_bucket_acl" "shop-be-images-acl" {
   }
 }
 
-resource "aws_s3_object" "dummy_zip" {
-  bucket = aws_s3_bucket.shop-be-images.bucket
-  key    = var.lambda_zip_name
-  source = "./dummy.zip"
-  etag   = filemd5("./dummy.zip")
-}
+# resource "aws_s3_object" "dummy_zip" {
+#   bucket = aws_s3_bucket.shop-be-images.bucket
+#   key    = var.lambda_zip_name
+#   source = "./dummy.zip"
+#   etag   = filemd5("./dummy.zip")
+# }
