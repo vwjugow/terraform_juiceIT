@@ -1,13 +1,21 @@
-#### CI
 resource "aws_codebuild_project" "shop_be_codebuild" {
   name         = "${local.prefix}_codebuild_proj"
   service_role = aws_iam_role.codebuild_role.arn
   source {
-    type      = "CODEPIPELINE"
-    buildspec = "buildspec-zip.yml"
+    type      = "GITHUB"
+    location  = "https://github.com/${local.github_owner}/${local.shop_be_repository_name}"
+    buildspec = local.buildspec_file
   }
+  source_version = local.shop_be_listen_branch_name
   artifacts {
-    type = "CODEPIPELINE"
+    artifact_identifier    = "ZipFile_build"
+    encryption_disabled    = false
+    location               = aws_s3_bucket.shop-be-images.id
+    name                   = "${local.prefix}-artifact"
+    namespace_type         = "NONE"
+    override_artifact_name = true
+    packaging              = "ZIP"
+    type                   = "S3"
   }
   environment {
     compute_type = var.codebuild_configuration["cb_compute_type"]

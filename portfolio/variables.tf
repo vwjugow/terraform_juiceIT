@@ -27,6 +27,7 @@ locals {
   github_oauth_token         = "sensible-to_do_delete"
   github_owner               = "vwjugow"
   shop_be_repository_name    = "shop_be_juiceIT"
+  buildspec_file             = "buildspec-zip.yml"
   shop_be_listen_branch_name = "zip_for_lambda"
   common_tags = {
     Project   = "Shop Backend"
