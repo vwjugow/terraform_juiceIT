@@ -1,14 +1,8 @@
-provider "aws" {
-  region = var.region
-  profile = var.aws_profile
-}
-
 data "aws_availability_zones" "available" {}
 
 module "vpc" {
-  source  = "terraform-aws-modules/vpc/aws"
-  version = "2.77.0"
-
+  source               = "terraform-aws-modules/vpc/aws"
+  version              = "2.77.0"
   name                 = "shop-be"
   cidr                 = "10.0.0.0/16"
   azs                  = data.aws_availability_zones.available.names
@@ -20,7 +14,6 @@ module "vpc" {
 resource "aws_db_subnet_group" "shop-be" {
   name       = "shop-be"
   subnet_ids = module.vpc.public_subnets
-
   tags = {
     Name = "shop-be"
   }
@@ -72,4 +65,42 @@ resource "aws_db_instance" "shop-be" {
   parameter_group_name   = aws_db_parameter_group.shop-be.name
   publicly_accessible    = true
   skip_final_snapshot    = true
+}
+
+## Parameters
+resource "aws_ssm_parameter" "db_pw" {
+  name        = "/development/database/password"
+  description = "The parameter description"
+  type        = "SecureString"
+  value       = aws_db_instance.shop-be.password
+  tags = {
+    environment = "development"
+  }
+}
+resource "aws_ssm_parameter" "db_user" {
+  name        = "/development/database/user"
+  description = "Dev DB username"
+  type        = "SecureString"
+  value       = aws_db_instance.shop-be.username
+  tags = {
+    environment = "development"
+  }
+}
+resource "aws_ssm_parameter" "db_hostname" {
+  name        = "/development/database/hostname"
+  description = "Dev DB hostname"
+  type        = "SecureString"
+  value       = aws_db_instance.shop-be.address
+  tags = {
+    environment = "development"
+  }
+}
+resource "aws_ssm_parameter" "db_port" {
+  name        = "/development/database/port"
+  description = "Dev DB port"
+  type        = "SecureString"
+  value       = aws_db_instance.shop-be.port
+  tags = {
+    environment = "development"
+  }
 }
